@@ -7,6 +7,7 @@ const app = express();
 const ExpressError = require("./expressError");
 const morgan = require("morgan");
 const companies = require("./routes/companies");
+const invoices = require("./routes/invoices");
 
 
 app.use(morgan('dev'));
@@ -14,6 +15,7 @@ app.use(express.json());
 
 
 app.use("/companies", companies);
+app.use("/invoices", invoices)
 
 /** 404 handler */
 

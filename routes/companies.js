@@ -10,11 +10,19 @@ router.get("/", async (req, res, next) => {
 });
 
 router.get("/:code", async (req, res, next) => {
-    const results = await db.query("SELECT * FROM companies WHERE code=$1;", [req.params.code]);
-    if (results.rows.length === 0){
+    // const results = await db.query("SELECT * FROM companies WHERE code=$1;", [req.params.code]);
+    // if (results.rows.length === 0){
+    //     return next();
+    // }
+    // return res.send({companies: results.rows[0]});
+
+    const company = await db.query("SELECT * FROM companies WHERE code=$1;", [req.params.code]);
+    if (company.rows.length === 0){
         return next();
     }
-    return res.send({companies: results.rows[0]});
+    const invoices = await db.query("SELECT * FROM invoices WHERE comp_code=$1", [company.rows[0].code]);
+    company.rows[0].invoices = invoices.rows;
+    return res.send({company: company.rows[0]});
 });
 
 router.post("/", async (req, res, next) => {
@@ -55,7 +63,7 @@ router.delete("/:code", async (req, res, next) => {
             return next();
         }
         const results = await db.query("DELETE FROM companies WHERE code=$1;", [req.params.code]);
-        return res.send({status: "Deleted"});
+        return res.send({status: "deleted"});
     }
     catch{
         return next(e);
