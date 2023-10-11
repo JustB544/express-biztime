@@ -4,10 +4,16 @@
 const express = require("express");
 
 const app = express();
-const ExpressError = require("./expressError")
+const ExpressError = require("./expressError");
+const morgan = require("morgan");
+const companies = require("./routes/companies");
 
+
+app.use(morgan('dev'));
 app.use(express.json());
 
+
+app.use("/companies", companies);
 
 /** 404 handler */
 

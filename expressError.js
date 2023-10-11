@@ -5,10 +5,13 @@
  */
 
 class ExpressError extends Error {
-  constructor(message, status) {
+  constructor(message, status, error=null) {
     super();
     this.message = message;
     this.status = status;
+    if (error) {
+      this.cause = error;
+    }
     console.error(this.stack);
   }
 }
