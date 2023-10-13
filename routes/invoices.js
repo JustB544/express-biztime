@@ -2,6 +2,7 @@ const express = require("express");
 const ExpressError = require("../expressError");
 const router = express.Router();
 const db = require("../db");
+const slugify = require("slugify");
 
 
 router.get("/", async (req, res, next) => {
@@ -17,7 +18,7 @@ router.get("/:id", async (req, res, next) => {
     const company = await db.query("SELECT * FROM companies WHERE code=$1", [invoices.rows[0].comp_code]);
     invoices.rows[0].company = company.rows[0];
     invoices.rows[0].comp_code = undefined;
-    return res.send({companies: invoices.rows[0]});
+    return res.send({invoice: invoices.rows[0]});
 });
 
 router.post("/", async (req, res, next) => {
@@ -25,8 +26,9 @@ router.post("/", async (req, res, next) => {
     if (json.comp_code === undefined || json.amt === undefined){
         return next(new ExpressError("Bad Request", 400));
     }
+    const comp_code = slugify(json.comp_code);
     try {
-        const results = await db.query("INSERT INTO invoices (comp_code, amt) VALUES ($1, $2) RETURNING id, comp_code, amt, paid, add_date, paid_date;", [json.comp_code, json.amt])
+        const results = await db.query("INSERT INTO invoices (comp_code, amt) VALUES ($1, $2) RETURNING id, comp_code, amt, paid, add_date, paid_date;", [comp_code, json.amt])
         return res.status(201).send({invoice: results.rows[0]});
     }
     catch(e) {
@@ -36,11 +38,15 @@ router.post("/", async (req, res, next) => {
 
 router.put("/:id", async (req, res, next) => {
     const json = req.body;
-    if (json.amt === undefined){
+    if (json.amt === undefined && json.paid === undefined){
         return next(new ExpressError("Bad Request", 400));
     }
     try {
-        const results = await db.query("UPDATE invoices SET amt=$2 WHERE id=$1 RETURNING id, comp_code, amt, paid, add_date, paid_date;", [req.params.id, json.amt]);
+        const results = await db.query(`UPDATE invoices SET 
+            ${(json.amt === undefined) ? "" : "amt=$2"}
+            ${(json.paid === undefined) ? "" : `${(json.amt === undefined) ? "paid=$2": ", paid=$3"}, paid_date=CURRENT_DATE`} 
+            WHERE id=$1 RETURNING id, comp_code, amt, paid, add_date, paid_date;`, [req.params.id, json.amt, json.paid].filter((c) => c !== undefined));
+
         if (results.rows.length === 0){
             return next();
         }

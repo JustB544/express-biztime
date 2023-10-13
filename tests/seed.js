@@ -1,5 +1,6 @@
-\c biztime
+const db = require("../db");
 
+const sql = `
 DROP TABLE IF EXISTS invoices;
 DROP TABLE IF EXISTS companies;
 DROP TABLE IF EXISTS industries;
@@ -41,3 +42,10 @@ INSERT INTO invoices (comp_Code, amt, paid, paid_date)
          ('apple', 300, true, '2018-01-01'),
          ('ibm', 400, false, null),
          ('code', 500, false, null);
+`;
+
+async function seed() {
+    await db.query(sql);
+}
+
+module.exports = seed;
